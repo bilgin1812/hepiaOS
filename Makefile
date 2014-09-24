@@ -1,14 +1,26 @@
 SRC=main.c
-FLAGS=-Wall -std=c99
-OBJ=$(SRC:.c=.o)
-OUT=test
+FLAGS=
+OBJ=$(SRC:.asm=)
+OUT=qemu
+CC=bcc
 
-$(OUT):	$(OBJ)
-	gcc $(OBJ) $(OUT) 
+$(OUT):	disk.img 
+	qemu -hda disk.img
+
+disk.img:boot kernel 
+	dd if=/dev/zero of=disk.img bs=512 count=100 
+	dd conv=notrunc seek=0 if=boot of=disk.img 
+	dd conv=notrunc seek=1 if=kernel of=disk.img 
+boot: boot.asm
+	nasm boot.asm
+kernel: kernel.asm
+	nasm kernel.asm
+
 %.o: %.c
-	gcc $(FLAGS) -c $(SRC)   
+	$(CC) $(FLAGS) -c $(SRC)   
 
 clean:
-	rm -f $(OBJ) $(OUT)
+	rm -f *.c *.o
+	rm -f kernel boot disk.img
 
 rebuild: clean $(OUT)

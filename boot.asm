@@ -1,7 +1,24 @@
 [BITS 16]				; mets nasm en mode 16 bits
 [ORG 0x7C00]			; ce code est enregistrer à 0x7c00
 
-extern _printf
+	; initialize segments
+	; ...
+
+	; setup stack
+	; ...
+
+	; reset drive
+	; ...
+
+	; display message
+	
+
+	; load kernel
+	; ...
+
+	; execute kernel
+	; ...
+
 
 ;----------Code principale du bootloader-----------;
 
