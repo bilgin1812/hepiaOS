@@ -1,0 +1,55 @@
+[BITS 16]				; mets nasm en mode 16 bits
+[ORG 0x7C00]			; ce code est enregistrer à 0x7c00
+
+
+
+.Reset:
+	mov		ah, 0					; reset floppy disk function
+	mov		dl, 0					; drive 0 is floppy drive
+	int		0x13					; call BIOS
+	jc		.Reset					; If Carry Flag (CF) is set, there was an error. Try resetting again
+ 
+	mov		ax, 0x1000				; we are going to read sector to into address 0x1000:0
+	mov		es, ax
+	xor		bx, bx
+ 
+.Read:
+	mov		ah, 0x02				; function 2
+	mov		al, 1					; read 1 sector
+	mov		ch, 1					; we are reading the second sector past us, so its still on track 1
+	mov		cl, 2					; sector to read (The second sector)
+	mov		dh, 0					; head number
+	mov		dl, 0					; drive number. Remember Drive 0 is floppy drive.
+	int		0x13					; call BIOS - Read the sector
+	jc		.Read					; Error, so try again
+ 
+	jmp		0x1000:0x0				; jump to execute the sector!
+
+;--------------Padding, Signature ---------------------;
+; $ is current line, $$ is first line, db 0 is a 00000000 byte
+; So, pad the code with 0s until you reach 510 bytes
+TIMES 510 - ($ - $$) DB 0x90
+
+; Fill last two bytes (a word) with the MBR signature 0xAA55
+DW 0xAA55
+ 
+
+
+
+
+;---------Notes personnelles-----------------------;
+;Le registre CS contient l'adresse de la prochaine instruction a exécuter
+
+
+
+
+
+
+
+
+
+
+
+
+
+  		

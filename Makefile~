@@ -4,7 +4,6 @@ OBJ=$(SRC:.asm=)
 OUT=qemu
 CC=bcc
 
-
 $(OUT):	disk.img 
 	qemu -hda disk.img
 
