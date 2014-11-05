@@ -2,6 +2,13 @@
 [ORG 0x7C00]			; ce code est enregistrer à 0x7c00
 
 
+
+;-----------------------STACK----------------------------------------;
+;Set the base of the stack a little above where BIOS
+mov bp,0x8000
+mov sp,bp  
+
+
 ;---------Display Message---------------------------------------;
 
 ;----------définition représentation à l'écran
@@ -33,7 +40,7 @@ INT 0x10
 RET 
 
 ;------------------ Bloc de données -------------------;
-HelloString db 'le bloc est charge', 0; 
+HelloString db 'Bootlader charged ', 0; 
 
 
 ;--------------------- Load kernel procedure
@@ -43,7 +50,8 @@ LoadKern:
         mov ch, 0x00    ; Track 0
         mov cl, 0x02    ; Sector 2
         mov dh, 0x00    ; Head 0
-        mov dl, 0x00    ; Drive 0 (Floppy 1) (This can be replaced with the value in BootDrv)
+
+        mov dl,dl; 0x00    ; dl is the boot disk
         mov bx, 0x2000  ; Segment 0x2000
         mov es, bx      ;  again remember segments bust be loaded from non immediate data
         mov bx, 0x0000  ; Start of segment - offset value
