@@ -1,0 +1,6 @@
+void printf(int a)
+
+{
+
+
+}
