@@ -10,9 +10,11 @@ $(OUT):	disk.img
 
 disk.img:boot  kernel.img
 	@echo "---> :Creating disk"
-	dd if=/dev/zero of=disk.img bs=1024 count=100 
+	dd if=/dev/zero of=disk.img bs=512 count=100 
 	dd conv=notrunc seek=0 if=boot of=disk.img 
 	dd conv=notrunc seek=1 if=kernel.img of=disk.img 
+	dd if=file.txt of=fi.img bs=512 count=10
+	dd conv=notrunc seek=10 if=fi.img of=disk.img
 
 boot:./bootD/boot.asm
 	@echo "---> :Compiling boot"

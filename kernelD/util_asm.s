@@ -104,6 +104,58 @@ _int80_stub:
 	pop bx
 	iret ; pop ip, cs and flags registerrs (3 registers) 
 
+.global _read_sector_raw
+
+_read_sector_raw:
+	push bp
+	mov bp,sp
+	
+	mov ah, #0x42
+	mov dx,[bp+4]
+	mov si, [bp+6]
+	mov bx,ds
+	mov [si+6],bx
+	mov dl,#0x80                   ; ajoute
+	int #0x13
+	
+	pop bp
+	ret
+
+.global _write_sector_raw
+
+_write_sector_raw:
+	push bp
+	mov bp,sp
+	
+	mov ah, #0x43
+	mov dx,[bp+4]
+	mov si, [bp+6]
+	mov bx,ds
+	mov [si+6],bx
+	int #0x13
+	
+	pop bp
+	ret
 
 
+; uses BIOS extended read
 
+.global _rd_sector_raw
+
+_rd_sector_raw:
+
+
+	push bp
+	mov bp,sp
+	
+	mov ah, #0x42
+	mov dl,#0x80                   ; ajoute
+	mov dx,[bp+4]
+	mov si, [bp+6]
+	mov bx,ds
+	mov [si+6],bx
+	
+	int #0x13
+	
+	pop bp
+	ret

@@ -104,13 +104,34 @@ _int80_stub:
 	pop bx
 	iret ; pop ip, cs and flags registerrs (3 registers) 
 
+.global read_sector_raw
 
-;-------Fonction Impression 
+_read_sector_raw:
+	push bp
+	mov bp,sp
+	
+	mov ah, #0x42
+	mov dx,[bp+4]
+	mov si, [bp+6]
+	mov bx,ds
+	mov [si+6],bx
+	int #0x13
+	
+	pop bp
+	ret
 
-.global PrintString
-_PrintString:  			
+.global write_sector_raw
 
-MOV AL, [SI]			; Met le contenu du pointeur SI dans registre AL
-INT 0x10  				
-RET 
-
+_write_sector_raw:
+	push bp
+	mov bp,sp
+	
+	mov ah, #0x40
+	mov dx,[bp+4]
+	mov si, [bp+6]
+	mov bx,ds
+	mov [si+6],bx
+	int #0x13
+	
+	pop bp
+	ret
