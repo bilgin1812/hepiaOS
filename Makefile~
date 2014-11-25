@@ -1,37 +1,43 @@
 SRC=main.c
-FLAGS=
-OBJ=$(SRC:.asm=)
 OUT=qemu
 CC=bcc
 
+.PHONY: clean rebuild
+
 $(OUT):	disk.img 
-	@ echo "---qemu starts disk"
+	@ echo "---> :qemu starts disk"
 	qemu-system-i386 -hda disk.img
 
-disk.img:./bootD/boot  ./kernelD/kernel.img
-	@ echo "---Creating disk"
+disk.img:boot  kernel.img
+	@echo "---> :Creating disk"
 	dd if=/dev/zero of=disk.img bs=512 count=100 
-	dd conv=notrunc seek=0 if=./bootD/boot of=disk.img 
-	dd conv=notrunc seek=1 if=./kernelD/kernel.img of=disk.img 
+	dd conv=notrunc seek=0 if=boot of=disk.img 
+	dd conv=notrunc seek=1 if=kernel.img of=disk.img 
+	dd if=file.txt of=fi.img bs=512 count=10
+	dd conv=notrunc seek=10 if=fi.img of=disk.img
+	
+boot:./bootD/boot.asm
+	@echo "---> :Compiling boot"
+	nasm ./bootD/boot.asm -o boot
 
-./bootD/boot:./bootD/boot.asm
-	@ echo "compiling boot"
-	nasm ./bootD/boot.asm 
-
-
-./kernelD/kernel.img:./kernelD/main.o ./kernelD/kernel.o ./kernelD/util_asm.o
-	@ echo "Compiling main and kernel " 	
-	bcc -W -V -I -ansi -c ./kernelD/main.c -o ./kernelD/main.o
-	bcc -W -V -I -ansi -c ./kernelD/kernel.c -o ./kernelD/kernel.o
-	@ echo "---compiling util_asm"
-	as86 ./kernelD/util_asm1.s -c ./kernelD/util_asm.o
+kernel.img:main.o kernel.o util_asm.o
+	@echo "---> :Compiling main and kernel " 	
+main.o:
+	$(CC) -W -V -I -ansi -c ./kernelD/main.c -o main.o
+kernel.o:
+	$(CC) -W -V -I -ansi -c ./kernelD/kernel.c -o kernel.o
+util_asm.o:
+	@ echo "---> :compiling util_asm"
+	as86 ./kernelD/util_asm.s -o util_asm.o
 	@ echo "---linking and creating kernel.img"
-	ld86 -M -m -d -s -o ./kernelD/kernel.img ./kernelD/main.o ./kernelD/kernel.o ./kernelD/util_asm.o
-%.o: %.c
-	$(CC) $(FLAGS) -c $(SRC)   
+	ld86 -M -m -d -s -o kernel.img main.o kernel.o util_asm.o
+ 
 
 clean:
-	rm -f *.c *.o
-	rm -f ./kernelD/kernel.o ./kernelD/main.o ./kernelD/util_asm.o  ./kernelD/kernel.img .bootD/boot disk.img 
-build  : boot kernel
-rebuild: clean boot kernel
+	rm -f kernel.o main.o util_asm.o  kernel.img boot disk.img
+	rm -f *.o *.img
+
+build:boot main.o kernel.o util_asm.o kernel.img disk.img 
+
+rebuild:clean build
+	
