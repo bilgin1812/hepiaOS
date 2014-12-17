@@ -1,0 +1,31 @@
+SRC=boot.asm
+OUT=kernel.img
+CC=bcc
+LINK=ld86
+ASM=as86
+CCFLAGS=-W -V -I -ansi -c
+LINKFLAGS=-M -m -d -s -o
+
+.PHONY: clean rebuild
+
+$(OUT):main.o kernel.o util_asm.o 
+	@echo "---> :Kernel Complied" 	
+main.o:
+	@echo "---> :Compiling Kernel"
+	$(CC) $(CCFLAGS) main.c -o main.o
+kernel.o:
+	$(CC) $(CCFLAGS) kernel.c -o kernel.o
+
+
+util_asm.o:
+	@ echo "---> :compiling util_asm"
+	$(ASM) util_asm.s -o util_asm.o
+	@ echo "---linking and creating kernel.img"
+	$(LINK) $(LINKFLAGS) kernel.img main.o kernel.o util_asm.o
+
+clean:
+	rm -f kernel.o main.o util_asm.o  kernel.img 
+
+build:boot main.o kernel.o util_asm.o kernel.img 
+
+rebuild:clean build

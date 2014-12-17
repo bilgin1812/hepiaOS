@@ -1,0 +1,52 @@
+//file stat.h
+
+#ifndef __FILE_STR
+#define __FILE_STR
+
+#include <stdint.h>
+
+typedef unsigned uint16_t uint;
+typedef unsigned char uchar;
+
+// _align : parmet de packer les structures (adresses) pour le compilateur
+
+typedef struct _align{
+	uchar signature[8]; // signature du système de fichiers (8 bytes): SFSv0100
+	uint nbSectBlock; // nombre de secteurs par block (2) 
+	uint tailleBitmap; // taille du bitmap en blocks (1)
+	uint tailleFileEntries; // taille d'une file entry en bytes (256) 
+	uint nbBlockFileEntries; // nombre de blocks réservés aux file entries (16) 
+	uint nbBlockData; // nombre de blocks réservés pour le contenu des fichiers
+}superblock;
+
+/*
+Tableau de bits indiquant les blocks utilisés pour le stockage du contenu des fichiers. Chaque byte représente l'état de 8 blocks (1 bit par block; 0 signifiant le block est libre et 1 signifiant le block est utilisé). Le bitmap faisant 1 block (2 secteurs), il peut donc référencer au maximum 8192 blocks (1024 bytes * 8 = 8192 bits).
+*/
+typedef struct _align{
+	// 1 block = 2 secteurs(512) = 1024 bytes
+	byte tabBitmap[1024];
+}bitmap;
+
+// structure pour 1 fichier
+// créer un tableau de fileEntry : fileEntry fEntries[100];
+typedef struct _align{
+	uchar name[32];
+	uint size;
+	uint indexBlock[  ]; // index du block contenant les données 
+}fileEntry;
+
+typedef struct _align{
+	uchar data[32][512] //  [(nb secteur disk / 2 ) -18]
+}fileContent;
+//superstructure qui va s'inscrire au début du disk
+typedef struct _align{
+	superblock sblock;
+	bitmap bpm;
+	fileEntry entry[64]; 
+	fileContent fcontent;
+  
+
+}superStruct;
+
+#endif
+

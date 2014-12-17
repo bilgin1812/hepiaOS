@@ -1,17 +1,3 @@
-
-	.global _times2
-	; int times2(int n);
-_times2:
-	push bp
-	mov bp,sp
-	push di
-	push si
-	mov ax,[bp+4]
-	shl ax,1
-	pop si
-	pop di
-	pop bp
-	ret
 .global _pipo
 
 _pipo:
@@ -104,7 +90,7 @@ _int80_stub:
 	pop bx
 	iret ; pop ip, cs and flags registerrs (3 registers) 
 
-.global read_sector_raw
+.global _read_sector_raw
 
 _read_sector_raw:
 	push bp
@@ -115,18 +101,19 @@ _read_sector_raw:
 	mov si, [bp+6]
 	mov bx,ds
 	mov [si+6],bx
+	mov dl,#0x80                   ; disk à lire pour etre sur
 	int #0x13
 	
 	pop bp
 	ret
 
-.global write_sector_raw
+.global _write_sector_raw
 
 _write_sector_raw:
 	push bp
 	mov bp,sp
 	
-	mov ah, #0x40
+	mov ah, #0x43
 	mov dx,[bp+4]
 	mov si, [bp+6]
 	mov bx,ds
@@ -135,3 +122,4 @@ _write_sector_raw:
 	
 	pop bp
 	ret
+

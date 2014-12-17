@@ -1,35 +1,4 @@
 
-	.global _times2
-	; int times2(int n);
-_times2:
-	push bp
-	mov bp,sp
-	push di
-	push si
-	mov ax,[bp+4]
-	shl ax,1
-	pop si
-	pop di
-	pop bp
-	ret
-.global _pipo
-
-_pipo:
-	push bp
-	mov bp,sp
-	push di
-	push si
-	mov ah, #0x0e	; = *$0e
-	mov bx, #0x07	; = *$07
-	movb al, #0x41	; = *$41 ; = #64; = 64
-	pop si
-	pushf
-	int 0x10
-	popf
-	pop si
-	pop di
-	pop bp
-	ret
 
 .global _interrupt
 _interrupt:
@@ -115,7 +84,7 @@ _read_sector_raw:
 	mov si, [bp+6]
 	mov bx,ds
 	mov [si+6],bx
-	mov dl,#0x80                   ; ajoute
+	mov dl,#0x80                   ; disk à lire pour etre sur
 	int #0x13
 	
 	pop bp
@@ -137,25 +106,3 @@ _write_sector_raw:
 	pop bp
 	ret
 
-
-; uses BIOS extended read
-
-.global _rd_sector_raw
-
-_rd_sector_raw:
-
-
-	push bp
-	mov bp,sp
-	
-	mov ah, #0x42
-	mov dl,#0x80                   ; ajoute
-	mov dx,[bp+4]
-	mov si, [bp+6]
-	mov bx,ds
-	mov [si+6],bx
-	
-	int #0x13
-	
-	pop bp
-	ret
