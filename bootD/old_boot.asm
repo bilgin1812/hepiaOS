@@ -5,8 +5,11 @@
 
 ;-----------------------STACK----------------------------------------;
 ;Set the base of the stack a little above where BIOS
-mov bp,0x8000
-mov sp,bp  
+
+mov ax, 0x1000 ; Set SS 
+mov ss, ax  ;
+mov ax,0xffff 
+mov sp, ax ; Set SP to 0x0fff, the higher, the better
 
 
 ;---------Display Message---------------------------------------;
@@ -46,23 +49,23 @@ HelloString db 'Bootlader charged ', 0;
 ;--------------------- Load kernel procedure
 LoadKern:
         mov ah, 0x02    ; Read Disk Sectors
-        mov al, 0x01    ; Read one sector only (512 bytes per sector)
+        mov al, 0x02    ; Read one sector only (1024 bytes per sector)
         mov ch, 0x00    ; Track 0
         mov cl, 0x02    ; Sector 2
         mov dh, 0x00    ; Head 0
 
         mov dl,dl; 0x00    ; dl is the boot disk
-        mov bx, 0x2000  ; Segment 0x2000
+        mov bx, 0x1000  ; Segment 0x2000
         mov es, bx      ;  again remember segments bust be loaded from non immediate data
         mov bx, 0x0000  ; Start of segment - offset value
 readsector:
         int 0x13        ; Call BIOS Read Disk Sectors function
         jc readsector  ; If there was an error, try again
 
-        mov ax, 0x2000  ; Set the data segment register
+        mov ax, 0x1000  ; Set the data segment register
         mov ds, ax      ;  to point to the kernel location in memory
 
-        jmp 0x2000:0x0000       ; Jump to the kernel
+        jmp 0x1000:0x0000       ; Jump to the kernel
 
 
 

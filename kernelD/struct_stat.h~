@@ -1,0 +1,17 @@
+#ifndef STRUCT_STAT
+#define STRUCT_STAT
+#include <stdlib.h>
+
+//fichier des structures
+
+//structure récupération information fichier 
+struct stat_st{
+	int size;
+	int saut_secteur;
+	int position; //position dans la fileEntry	
+};
+
+
+
+
+#endif 

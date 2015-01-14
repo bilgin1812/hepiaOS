@@ -1,0 +1,3 @@
+je suis un fichier
+bonjour
+ce texte est dans un fichier

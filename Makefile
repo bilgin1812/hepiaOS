@@ -8,34 +8,31 @@ $(OUT):	disk.img
 	@ echo "---> :qemu starts disk"
 	qemu-system-i386 -hda disk.img
 
-disk.img:boot  kernel.img
+disk.img:./bootD/boot.img ./kernelD/kernel.img ./tools/sfs.img
 	@echo "---> :Creating disk"
-	dd if=/dev/zero of=disk.img bs=1024 count=100 
-	dd conv=notrunc seek=0 if=boot of=disk.img 
-	dd conv=notrunc seek=1 if=kernel.img of=disk.img 
+	dd if=/dev/zero of=disk.img bs=512 count=1000 
+	dd conv=notrunc seek=0  if=./bootD/boot of=disk.img 
+	dd conv=notrunc seek=1  if=./kernelD/kernel.img of=disk.img
+	dd conv=notrunc seek=10 if=./tools/sfs.img of=disk.img
+	 
+	
+./bootD/boot.img:
+	make -C bootD
 
-boot:./bootD/boot.asm
-	@echo "---> :Compiling boot"
-	nasm ./bootD/boot.asm -o boot
+./kernelD/kernel.img:
+	make -C kernelD
 
-kernel.img:main.o kernel.o util_asm.o
-	@echo "---> :Compiling main and kernel " 	
-main.o:
-	$(CC) -W -V -I -ansi -c ./kernelD/main.c -o main.o
-kernel.o:
-	$(CC) -W -V -I -ansi -c ./kernelD/kernel.c -o kernel.o
-util_asm.o:
-	@ echo "---> :compiling util_asm"
-	as86 ./kernelD/util_asm.s -o util_asm.o
-	@ echo "---linking and creating kernel.img"
-	ld86 -M -m -d -s -o kernel.img main.o kernel.o util_asm.o
- 
+./tools/sfs.img:
+	make -C tools  
+	
 
-clean:
-	rm -f kernel.o main.o util_asm.o  kernel.img boot disk.img
+clean:	
 	rm -f *.o *.img
+	make clean -C kernelD
+	make clean -C bootD
+	make clean -C tools
 
-build:boot main.o kernel.o util_asm.o kernel.img disk.img 
+build:boot main.o kernel.img disk.img 
 
 rebuild:clean build
 	

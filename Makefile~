@@ -1,37 +1,38 @@
 SRC=main.c
-FLAGS=
-OBJ=$(SRC:.asm=)
 OUT=qemu
 CC=bcc
 
+.PHONY: clean rebuild
+
 $(OUT):	disk.img 
-	@ echo "---qemu starts disk"
+	@ echo "---> :qemu starts disk"
 	qemu-system-i386 -hda disk.img
 
-disk.img:./bootD/boot  ./kernelD/kernel.img
-	@ echo "---Creating disk"
-	dd if=/dev/zero of=disk.img bs=512 count=100 
-	dd conv=notrunc seek=0 if=./bootD/boot of=disk.img 
-	dd conv=notrunc seek=1 if=./kernelD/kernel.img of=disk.img 
+disk.img:./bootD/boot.img ./kernelD/kernel.img ./tools/sfs.img
+	@echo "---> :Creating disk"
+	dd if=/dev/zero of=disk.img bs=512 count=10000 
+	dd conv=notrunc seek=0  if=./bootD/boot of=disk.img 
+	dd conv=notrunc seek=1  if=./kernelD/kernel.img of=disk.img
+	dd conv=notrunc seek=10 if=./tools/sfs.img of=disk.img
+	 
+	
+boot.img:
+	make -C bootD
 
-./bootD/boot:./bootD/boot.asm
-	@ echo "compiling boot"
-	nasm ./bootD/boot.asm 
+kernel.img:
+	make -C kernelD
 
+sfs.img:
+	make -C tools  
+	
 
-./kernelD/kernel.img:./kernelD/main.o ./kernelD/kernel.o ./kernelD/util_asm.o
-	@ echo "Compiling main and kernel " 	
-	bcc -W -V -I -ansi -c ./kernelD/main.c -o ./kernelD/main.o
-	bcc -W -V -I -ansi -c ./kernelD/kernel.c -o ./kernelD/kernel.o
-	@ echo "---compiling util_asm"
-	as86 ./kernelD/util_asm1.s -c ./kernelD/util_asm.o
-	@ echo "---linking and creating kernel.img"
-	ld86 -M -m -d -s -o ./kernelD/kernel.img ./kernelD/main.o ./kernelD/kernel.o ./kernelD/util_asm.o
-%.o: %.c
-	$(CC) $(FLAGS) -c $(SRC)   
+clean:	
+	rm -f *.o *.img
+	make clean -C kernelD
+	make clean -C bootD
+	make clean -C tools
 
-clean:
-	rm -f *.c *.o
-	rm -f ./kernelD/kernel.o ./kernelD/main.o ./kernelD/util_asm.o  ./kernelD/kernel.img .bootD/boot disk.img 
-build  : boot kernel
-rebuild: clean boot kernel
+build:boot main.o kernel.img disk.img 
+
+rebuild:clean build
+	

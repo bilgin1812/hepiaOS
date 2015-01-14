@@ -1,4 +1,0 @@
-sfsscreate x
-sfsadd x file
-sfslist x
-sfsdel x file

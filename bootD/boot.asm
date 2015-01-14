@@ -1,101 +1,81 @@
-[BITS 16]				; mets nasm en mode 16 bits
-[ORG 0x7C00]			; ce code est enregistrer à 0x7c00
+; A simple real-mode boot loader
 
+KERN_SEG        equ     0x1000  ; kernel loaded at this address
+KERN_SIZE       equ     16      ; max kernel size in sectors (8KB)
+KERN_START      equ     1       ; sector where kernel resides (0-indexed)
+BOOT_DRIVE      equ     0x80    ; boot drive (0x00 = floppy, 0x80 = HDD)
+STACK_OFFS      equ     0xfbfe  ; offset at which the stack starts
 
+[BITS 16]
+[ORG 0x0]
 
-;-----------------------STACK----------------------------------------;
-;Set the base of the stack a little above where BIOS
+	; initialize segments 
+	mov ax, KERN_SEG   ; data segment must be = code segment (tiny memory model!)
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
 
-mov ax, 0x10000 ; Set SS 
-mov ss, ax  ;
-mov ax,0xffff 
-mov sp, ax ; Set SP to 0x0fff, the higher, the better
+	; stack starts at KERN_SEG:STACK_OFFS (grows downward)
+	mov ax, STACK_OFFS
+	mov sp, ax
 
+	; reset drive
+	xor ax, ax
+	int 0x13
 
-;---------Display Message---------------------------------------;
+	; display message
+	push ds
+	mov ax, 0x7c0 ; BIOS loads the 1st sector at 0x7c00
+	mov ds, ax
+	mov si, msg
+	call print_string
 
-;----------définition représentation à l'écran
-MOV AH, 0x0E			; mode teletype
-MOV BH, 0x00			; mode page zero
-MOV BL, 0x07			; gris léger
+	; load kernel at address KERN_SEG:0
+	; uses BIOS extended read
+	mov ah, 0x42
+	mov dl, BOOT_DRIVE      ; set boot drive
+	mov si, packet
+	int 0x13
+	pop ds
 
-MOV SI, HelloString 	; place l'adresse de la phrase dans le registre SI
-Call PrintString		; appel la fonction d'impression
+	; jump to kernel
+	jmp KERN_SEG:0
 
-jmp LoadKern
-;-------Fonction Impression 
+; =============================================================================
+; print string located whose address is at [si]
+print_string:
+	push ax
+	push si
+	mov ah, 0xe
+print_string_loop:
+	mov al, byte [si]
+	cmp al, 0
+	je print_string_done
+	int 0x10
+	inc si
+	jmp print_string_loop
+print_string_done:
+	pop si
+	pop ax
+	ret
 
-PrintString:  			;
+; =============================================================================
+; data
 
-MOV AL, [SI]			; Met le contenu du pointeur SI dans registre AL
-OR AL, AL				; Compare si zéro
-JZ exit_function		; Si oui on quitte
-Call PrintCharacter     ; Si non, appel impression du charactère à l'écran
-INC SI					; On passe à l'adresse suivante
-jmp PrintString		; On revient au début de la boucle
+; memory structure required by the extended read call
+packet:
+	size           db 0x10
+	reserved       db 0
+	sect_count     dw KERN_SIZE
+	addr_offset    dw 0
+	addr_segment   dw KERN_SEG
+	first_sect     dq KERN_START ; first sector to read (0-indexed)
 
-exit_function:
-RET
+	msg db "Loading kernel...",13,10,0
 
-PrintCharacter: 		; impression à l'écran
+	; fill with nop instructions until offset 510
+	times 510-($-$$) db 0x90
 
-INT 0x10  				
-RET 
+	; last 2 bytes of sector: indicate a bootable sector
+	dw 0xAA55
 
-;------------------ Bloc de données -------------------;
-HelloString db 'Bootlader charged ', 0; 
-
-
-;--------------------- Load kernel procedure
-LoadKern:
-        mov ah, 0x02    ; Read Disk Sectors
-        mov al, 0x02    ; Read one sector only (1024 bytes per sector)
-        mov ch, 0x00    ; Track 0
-        mov cl, 0x02    ; Sector 2
-        mov dh, 0x00    ; Head 0
-
-        mov dl,dl; 0x00    ; dl is the boot disk
-        mov bx, 0x3000  ; Segment 0x2000
-        mov es, bx      ;  again remember segments bust be loaded from non immediate data
-        mov bx, 0x0000  ; Start of segment - offset value
-readsector:
-        int 0x13        ; Call BIOS Read Disk Sectors function
-        jc readsector  ; If there was an error, try again
-
-        mov ax, 0x3000  ; Set the data segment register
-        mov ds, ax      ;  to point to the kernel location in memory
-
-        jmp 0x3000:0x0000       ; Jump to the kernel
-
-
-
-
-
-;--------------Padding, Signature ---------------------;
-; $ is current line, $$ is first line, db 0 is a 00000000 byte
-; So, pad the code with 0s until you reach 510 bytes
-TIMES 510 - ($ - $$) DB 0x90
-
-; Fill last two bytes (a word) with the MBR signature 0xAA55
-DW 0xAA55
- 
-
-
-
-
-;---------Notes personnelles-----------------------;
-;Le registre CS contient l'adresse de la prochaine instruction a exécuter
-
-
-
-
-
-
-
-
-
-
-
-
-
-  		
